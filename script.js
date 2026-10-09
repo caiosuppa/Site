@@ -1,4 +1,4 @@
-const STATUS_ICONE = {
+﻿const STATUS_ICONE = {
     OK: '✓',
     ATENCAO: '!',
     ERRO: '×',

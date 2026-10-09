@@ -1,0 +1,222 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Painel demonstrativo SNOC da Winover para monitoramento de carteiras.">
+    <title>SNOC Winover — Monitoramento de Carteiras</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="logo-section" aria-label="NOC Command Center">
+                <div class="pulse-icon" aria-hidden="true"></div>
+                <div>
+                    <h1>SNOC <span class="subtitle">| Winover · Monitoramento de Carteiras</span></h1>
+                    <span class="mode-badge">MODO DEMONSTRAÇÃO</span>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="btn-sound" class="btn btn-ghost" type="button" aria-label="Ativar ou desativar som">🔊 Som On</button>
+                <span id="horario-atual" class="clock" aria-live="polite">🕒 Carregando...</span>
+                <button id="btn-refresh" class="btn btn-primary" type="button">↻ Atualizar</button>
+            </div>
+        </header>
+
+        <section class="controls-bar" aria-label="Controles de busca e filtros">
+            <label class="search-field" for="input-busca">
+                <span class="search-icon" aria-hidden="true">🔎</span>
+                <input type="search" id="input-busca" placeholder="Buscar carteira ou ambiente..." autocomplete="off">
+            </label>
+
+            <div class="filter-buttons" role="group" aria-label="Filtrar por status">
+                <button class="btn-filter active" data-status="TODOS" type="button">Todos</button>
+                <button class="btn-filter filter-erro" data-status="ERRO" type="button">🚨 Erros</button>
+                <button class="btn-filter filter-atencao" data-status="ATENCAO" type="button">⚠️ Atenção</button>
+                <button class="btn-filter filter-ok" data-status="OK" type="button">🟢 OK</button>
+                <button class="btn-filter filter-na" data-status="NA" type="button">⚪ Sem dados</button>
+            </div>
+        </section>
+
+        <section class="kpi-grid" aria-label="Resumo geral">
+            <article class="kpi-card">
+                <span class="kpi-title">Total de carteiras</span>
+                <span id="kpi-total" class="kpi-value">0</span>
+            </article>
+            <article class="kpi-card">
+                <span class="kpi-title">Execuções em demonstração</span>
+                <span id="kpi-demo" class="kpi-value">0</span>
+            </article>
+            <article class="kpi-card border-ok">
+                <span class="kpi-title">Operacionais</span>
+                <span id="kpi-ok" class="kpi-value color-ok">0</span>
+            </article>
+            <article class="kpi-card border-atencao">
+                <span class="kpi-title">Em atenção</span>
+                <span id="kpi-atencao" class="kpi-value color-atencao">0</span>
+            </article>
+            <article class="kpi-card border-erro">
+                <span class="kpi-title">Falhas críticas</span>
+                <span id="kpi-erro" class="kpi-value color-erro">0</span>
+            </article>
+        </section>
+
+        <section class="notice-banner" role="note">
+            <strong>Importante:</strong> esta tela usa dados demonstrativos. VPN, SSH, chegada de arquivos,
+            descriptografia e cópias para WOCC/MIS/CMK só serão monitorados de verdade após integração
+            com os respectivos serviços e configuração dos ambientes locais.
+        </section>
+
+        <main>
+            <section class="topology-panel" aria-labelledby="topologia-titulo">
+                <div class="operations-heading">
+                    <div>
+                        <span class="eyebrow">FLUXO CONHECIDO</span>
+                        <h2 id="topologia-titulo">Caminho das cargas</h2>
+                    </div>
+                    <span class="topology-tag">TOPOLOGIA OPERACIONAL</span>
+                </div>
+                <div id="topologia-fluxo" class="topology-flows" aria-live="polite">
+                    <p class="panel-empty">Carregando topologia...</p>
+                </div>
+                <p class="panel-note">O mapeamento de VMs e departamentos locais ainda precisa ser associado a cada carteira.</p>
+            </section>
+
+            <section class="radar-panel" aria-labelledby="radar-titulo">
+                <div class="radar-heading">
+                    <div>
+                        <span class="eyebrow">VISÃO GERAL</span>
+                        <h2 id="radar-titulo">Radar de carteiras</h2>
+                        <p>Posição visual das carteiras filtradas. Selecione um ponto para abrir a esteira.</p>
+                    </div>
+                    <div class="radar-legend" aria-label="Legenda de status">
+                        <span><i class="legend-dot ok"></i>Operacional</span>
+                        <span><i class="legend-dot atencao"></i>Atenção</span>
+                        <span><i class="legend-dot erro"></i>Falha</span>
+                        <span><i class="legend-dot na"></i>Sem dados</span>
+                    </div>
+                </div>
+                <div class="radar-visual">
+                    <svg id="radar-svg" class="radar-svg" viewBox="0 0 600 500" role="group" aria-label="Radar interativo das carteiras">
+                        <defs>
+                            <linearGradient id="radar-sweep-gradient" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.24"></stop>
+                                <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"></stop>
+                            </linearGradient>
+                        </defs>
+                        <circle class="radar-ring radar-ring-outer" cx="300" cy="250" r="180"></circle>
+                        <circle class="radar-ring" cx="300" cy="250" r="135"></circle>
+                        <circle class="radar-ring" cx="300" cy="250" r="90"></circle>
+                        <circle class="radar-ring" cx="300" cy="250" r="45"></circle>
+                        <line class="radar-axis" x1="120" y1="250" x2="480" y2="250"></line>
+                        <line class="radar-axis" x1="300" y1="70" x2="300" y2="430"></line>
+                        <g class="radar-sweep-group">
+                            <path class="radar-sweep" d="M 300 250 L 300 70 A 180 180 0 0 1 427.3 122.7 Z"></path>
+                            <line class="radar-sweep-line" x1="300" y1="250" x2="300" y2="70"></line>
+                        </g>
+                        <g id="radar-pontos"></g>
+                    </svg>
+                    <p id="radar-vazio" class="radar-empty" hidden>Nenhuma carteira corresponde aos filtros atuais.</p>
+                </div>
+                <p class="radar-caption">Radar ilustrativo: a posição dos pontos não representa localização física nem conectividade de rede.</p>
+            </section>
+
+            <section class="operations-grid" aria-label="Acompanhamento operacional">
+                <article class="operations-panel incidents-panel">
+                    <div class="operations-heading">
+                        <div>
+                            <span class="eyebrow">AÇÃO</span>
+                            <h2>Ocorrências prioritárias</h2>
+                        </div>
+                        <span id="total-ocorrencias" class="count-badge">0</span>
+                    </div>
+                    <div id="lista-ocorrencias" class="incident-list" aria-live="polite">
+                        <p class="panel-empty">Carregando ocorrências...</p>
+                    </div>
+                </article>
+
+                <article class="operations-panel file-panel">
+                    <div class="operations-heading">
+                        <div>
+                            <span class="eyebrow">SANTANDER · ARQUIVO DIÁRIO</span>
+                            <h2>Recebimento do arquivo</h2>
+                        </div>
+                        <span id="status-arquivo-santander" class="status-badge-main na">SEM DADOS</span>
+                    </div>
+                    <div class="file-metrics">
+                        <div class="file-metric">
+                            <span>Janela esperada</span>
+                            <strong id="arquivo-janela">Não configurada</strong>
+                        </div>
+                        <div class="file-metric">
+                            <span>Arquivo recebido</span>
+                            <strong id="arquivo-nome">Sem registro</strong>
+                        </div>
+                        <div class="file-metric">
+                            <span>Recebido em</span>
+                            <strong id="arquivo-horario">Sem registro</strong>
+                        </div>
+                        <div class="file-metric">
+                            <span>Tempo desde a chegada</span>
+                            <strong id="arquivo-idade">Sem registro</strong>
+                        </div>
+                    </div>
+                    <p id="arquivo-nota" class="panel-note">Configure a janela de recebimento e conecte a fonte de arquivos para calcular atrasos.</p>
+                </article>
+
+                <article class="operations-panel performance-panel">
+                    <div class="operations-heading">
+                        <div>
+                            <span class="eyebrow">EXECUÇÕES</span>
+                            <h2>Duração e histórico</h2>
+                        </div>
+                    </div>
+                    <div id="resumo-duracao" class="duration-summary">
+                        <strong>Sem dados de duração</strong>
+                        <span>As etapas ainda não enviam horários de início/fim.</span>
+                    </div>
+                    <div id="historico-execucoes" class="history-list">
+                        <p class="panel-empty">Histórico indisponível até a integração dos eventos de execução.</p>
+                    </div>
+                </article>
+            </section>
+
+            <section class="section-heading">
+                <div>
+                    <h2>Esteira de processamento</h2>
+                    <p>Abra uma carteira para ver o detalhe de cada etapa e o destino local.</p>
+                </div>
+                <span id="ultima-atualizacao" class="last-update">Aguardando consulta</span>
+            </section>
+            <section id="container-carteiras" class="carteiras-list" aria-live="polite"></section>
+        </main>
+
+        <footer class="terminal-footer">
+            <div class="terminal-header">
+                <span>📟 EVENTOS DA SESSÃO</span>
+                <button id="btn-clear-log" class="btn-clear-log" type="button">Limpar eventos</button>
+            </div>
+            <div id="terminal-body" class="terminal-body" aria-live="polite">
+                <p class="log-entry system">[SISTEMA] Painel iniciado em modo demonstração; nenhuma conexão operacional foi validada.</p>
+            </div>
+        </footer>
+    </div>
+
+    <div id="modal-gaveta" class="modal-overlay hidden" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+            <div class="modal-header">
+                <h2 id="modal-titulo">Detalhes da carteira</h2>
+                <button id="btn-fechar-modal" class="btn-close" type="button" aria-label="Fechar detalhes">&times;</button>
+            </div>
+            <div id="modal-corpo" class="modal-body"></div>
+            <div class="modal-footer">
+                <p class="modal-note">Ações de reteste ficam indisponíveis até a integração com os sistemas operacionais.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
